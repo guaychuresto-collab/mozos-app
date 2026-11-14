@@ -1,0 +1,9 @@
+{
+  "name": "Mozos - Gestión de Mesas",
+  "short_name": "Mozos",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f7fa",
+  "theme_color": "#1a73e8",
+  "orientation": "portrait"
+}

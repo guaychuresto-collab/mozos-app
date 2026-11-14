@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Mozos - Gestión de Mesas</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1a73e8">
+  <link rel="apple-touch-icon" href="icon.png">
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>🍽️ Mozos</h1>
+      <div class="connection-status" id="status">Conectando...</div>
+      <nav>
+        <button class="nav-btn active" data-view="mesas">Mesas</button>
+        <button class="nav-btn" data-view="caja">Caja</button>
+        <button class="nav-btn" data-view="menu">Menú</button>
+        <button class="nav-btn" data-view="config">Config</button>
+      </nav>
+    </header>
+
+    <main id="main">
+      <!-- Vista Mesas (Mozos) -->
+      <section id="view-mesas" class="view active">
+        <div class="tables-grid" id="tables-grid"></div>
+        <div id="table-detail" class="hidden">
+          <button class="back-btn" id="back-to-tables">← Volver a mesas</button>
+          <h2>Mesa <span id="detail-table-num"></span></h2>
+          <div id="current-order"></div>
+          <div class="add-item-section">
+            <h3>Agregar producto</h3>
+            <input type="text" id="search-menu" placeholder="Buscar en el menú..." autocomplete="off">
+            <div id="menu-results" class="menu-results"></div>
+          </div>
+          <div class="notes-section">
+            <label>Notas / Observaciones:</label>
+            <textarea id="table-notes" placeholder="Ej: sin sal, bien cocido, para llevar..."></textarea>
+          </div>
+          <div class="actions">
+            <button class="btn primary" id="save-order">Guardar Pedido</button>
+            <button class="btn danger" id="close-table">Cerrar Mesa</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Vista Caja -->
+      <section id="view-caja" class="view">
+        <h2>Pedidos Activos</h2>
+        <div id="caja-list"></div>
+        <div class="summary" id="caja-summary"></div>
+      </section>
+
+      <!-- Vista Menú -->
+      <section id="view-menu" class="view">
+        <h2>Carta del Menú</h2>
+        <div class="add-menu-form">
+          <input type="text" id="new-item-name" placeholder="Nombre del producto">
+          <select id="new-item-category">
+            <option value="comida">Comida</option>
+            <option value="bebida">Bebida</option>
+          </select>
+          <input type="number" id="new-item-price" placeholder="Precio" step="100">
+          <button class="btn primary" id="add-menu-item">Agregar</button>
+        </div>
+        <div id="menu-list"></div>
+      </section>
+
+      <!-- Vista Config -->
+      <section id="view-config" class="view">
+        <h2>Configuración</h2>
+        <div class="config-item">
+          <label>Cantidad de mesas:</label>
+          <div class="input-group">
+            <button class="btn" id="tables-minus">−</button>
+            <input type="number" id="tables-count" min="1" max="50" value="10">
+            <button class="btn" id="tables-plus">+</button>
+          </div>
+          <button class="btn primary" id="apply-tables">Aplicar</button>
+        </div>
+        <div class="info-box">
+          <p><strong>Cómo usar:</strong></p>
+          <ol>
+            <li>Configurá la cantidad de mesas.</li>
+            <li>Cargá el menú en la pestaña Menú.</li>
+            <li>Los mozos usan la pestaña Mesas para cargar pedidos.</li>
+            <li>En Caja se ven todos los pedidos en tiempo real.</li>
+            <li>Todos los celulares se actualizan automáticamente.</li>
+          </ol>
+          <p class="hint">Para que funcione en varios celulares, todos tienen que estar en la misma red WiFi y abrir la misma dirección (la IP de la computadora donde corre el servidor).</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
