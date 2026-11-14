@@ -136,10 +136,91 @@ nav {
   line-height: 1;
 }
 
-.table-total {
+.table-waiter {
   font-size: 0.55rem;
-  font-weight: 700;
+  font-weight: 600;
   margin-top: 1px;
+  opacity: 0.9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 48px;
+}
+
+/* Celular: mesas más chicas */
+@media (max-width: 600px) {
+  .tables-grid.salon-layout {
+    height: 70vh;
+    min-height: 480px;
+  }
+  .table-card {
+    width: 38px;
+    height: 38px;
+    border-radius: 6px;
+    border-width: 1.5px;
+  }
+  .table-number {
+    font-size: 0.85rem;
+  }
+  .table-waiter {
+    font-size: 0.45rem;
+    max-width: 34px;
+  }
+  .table-total {
+    font-size: 0.45rem;
+  }
+}
+
+.waiter-filters {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 8px 0 12px;
+  margin-bottom: 8px;
+}
+.filter-btn {
+  padding: 8px 14px;
+  border: 2px solid #ddd;
+  background: white;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.filter-btn.active {
+  background: #1a73e8;
+  color: white;
+  border-color: #1a73e8;
+}
+
+.waiter-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+.waiter-btn {
+  padding: 12px 16px;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: white;
+  cursor: pointer;
+  min-width: 100px;
+  text-align: center;
+  opacity: 0.75;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.waiter-btn.selected {
+  opacity: 1;
+  transform: scale(1.05);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+}
+.waiter-btn[data-waiter=""] {
+  background: #90a4ae !important;
+  color: white;
 }
 
 /* Detalle mesa */

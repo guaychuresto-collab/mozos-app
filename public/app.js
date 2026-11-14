@@ -82,14 +82,42 @@ const TABLE_POSITIONS = {
   54: {left: 86, top: 58}, 55: {left: 94, top: 58}
 };
 
+let currentFilter = 'todos';
+const WAITER_COLORS = ['#42a5f5', '#ab47bc', '#26a69a', '#ffa726', '#ef5350', '#7e57c2', '#66bb6a', '#ff7043'];
+
+function getWaiterColor(name) {
+  if (!name) return null;
+  const idx = (state.waiters || []).indexOf(name);
+  return WAITER_COLORS[idx % WAITER_COLORS.length] || '#90a4ae';
+}
+
+function renderFilters() {
+  const container = document.getElementById('waiter-filters');
+  if (!container) return;
+  const waiters = state.waiters || [];
+  container.innerHTML = `
+    <button class="filter-btn ${currentFilter === 'todos' ? 'active' : ''}" data-filter="todos">Todos</button>
+    ${waiters.map(w => `<button class="filter-btn ${currentFilter === w ? 'active' : ''}" data-filter="${w}" style="border-color:${getWaiterColor(w)}">${w}</button>`).join('')}
+  `;
+  container.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentFilter = btn.dataset.filter;
+      showTables();
+    });
+  });
+}
+
 function showTables() {
   tablesGrid.classList.remove('hidden');
   tableDetail.classList.add('hidden');
   tablesGrid.innerHTML = '';
   tablesGrid.classList.add('salon-layout');
+  renderFilters();
 
   const tables = Object.values(state.tables);
   tables.forEach(table => {
+    if (currentFilter !== 'todos' && table.waiter !== currentFilter) return;
+
     const pos = TABLE_POSITIONS[table.id] || {left: 50, top: 50};
     const card = document.createElement('div');
     let statusClass = 'libre';
@@ -101,8 +129,17 @@ function showTables() {
     card.className = `table-card ${statusClass}`;
     card.style.left = pos.left + '%';
     card.style.top = pos.top + '%';
+
+    const color = getWaiterColor(table.waiter);
+    if (color) {
+      card.style.background = color;
+      card.style.borderColor = color;
+      card.style.color = '#fff';
+    }
+
     card.innerHTML = `
       <div class="table-number">${table.id}</div>
+      ${table.waiter ? `<div class="table-waiter">${table.waiter.split(' ')[0]}</div>` : ''}
       ${table.total > 0 ? `<div class="table-total">$${Math.round(table.total/1000)}k</div>` : ''}
     `;
     card.addEventListener('click', () => openTable(table.id));
@@ -116,6 +153,33 @@ function openTable(id) {
   currentOrder = JSON.parse(JSON.stringify(table.items || []));
   detailTableNum.textContent = id;
   tableNotes.value = table.notes || '';
+
+  // Botones grandes de mozos
+  const buttonsDiv = document.getElementById('waiter-buttons');
+  const waiters = state.waiters || [];
+  buttonsDiv.innerHTML = `
+    <button class="waiter-btn ${!table.waiter ? 'selected' : ''}" data-waiter="">Sin asignar</button>
+    ${waiters.map(w => `
+      <button class="waiter-btn ${table.waiter === w ? 'selected' : ''}" data-waiter="${w}" style="background:${getWaiterColor(w)}">
+        ${w}
+      </button>
+    `).join('')}
+  `;
+  buttonsDiv.querySelectorAll('.waiter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      buttonsDiv.querySelectorAll('.waiter-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      // Guardar inmediatamente la asignación
+      socket.emit('updateTable', {
+        tableId: currentTableId,
+        waiter: btn.dataset.waiter,
+        items: currentOrder,
+        notes: tableNotes.value,
+        status: currentOrder.length > 0 ? 'ocupada' : (btn.dataset.waiter ? 'ocupada' : 'libre')
+      });
+    });
+  });
+
   tablesGrid.classList.add('hidden');
   tableDetail.classList.remove('hidden');
   renderCurrentOrder();
@@ -202,11 +266,14 @@ searchMenu.addEventListener('input', () => {
 
 document.getElementById('save-order').addEventListener('click', () => {
   if (!currentTableId) return;
+  const selectedBtn = document.querySelector('#waiter-buttons .waiter-btn.selected');
+  const waiter = selectedBtn ? selectedBtn.dataset.waiter : '';
   socket.emit('updateTable', {
     tableId: currentTableId,
     items: currentOrder,
     notes: tableNotes.value,
-    status: currentOrder.length > 0 ? 'ocupada' : 'libre'
+    waiter: waiter,
+    status: currentOrder.length > 0 ? 'ocupada' : (waiter ? 'ocupada' : 'libre')
   });
   alert('Pedido guardado ✓');
   showTables();
@@ -321,5 +388,42 @@ document.getElementById('apply-tables').addEventListener('click', () => {
   }
 });
 
+// ===== MOZOS =====
+function renderWaiters() {
+  const list = document.getElementById('waiters-list');
+  if (!list) return;
+  list.innerHTML = (state.waiters || []).map(w => `
+    <div class="menu-item">
+      <div class="info"><strong>${w}</strong></div>
+      <button class="delete-menu" data-name="${w}">Eliminar</button>
+    </div>
+  `).join('') || '<div class="empty-order">No hay mozos cargados</div>';
+
+  list.querySelectorAll('.delete-menu').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (confirm('¿Eliminar este mozo?')) {
+        socket.emit('deleteWaiter', btn.dataset.name);
+      }
+    });
+  });
+}
+
+document.getElementById('add-waiter').addEventListener('click', () => {
+  const name = document.getElementById('new-waiter-name').value.trim();
+  if (!name) return;
+  socket.emit('addWaiter', name);
+  document.getElementById('new-waiter-name').value = '';
+});
+
+// Actualizar renderAll para incluir waiters
+const originalRenderAll = renderAll;
+renderAll = function() {
+  originalRenderAll();
+  if (document.getElementById('view-config')?.classList.contains('active')) {
+    renderWaiters();
+  }
+};
+
 // Inicial
 showTables();
+if (state.waiters) renderWaiters();

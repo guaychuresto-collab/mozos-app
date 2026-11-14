@@ -27,6 +27,7 @@ let state = {
     { id: 7, name: "Café con Leche", category: "bebida", price: 2000 },
     { id: 8, name: "Tostado de Jamón y Queso", category: "comida", price: 4500 }
   ],
+  waiters: ["Santiago", "Diana", "Emiliano"],
   nextMenuId: 9
 };
 
@@ -150,6 +151,26 @@ io.on('connection', (socket) => {
     io.emit('state', state);
   });
 
+  socket.on('addWaiter', (name) => {
+    if (!name || !name.trim()) return;
+    const clean = name.trim();
+    if (!state.waiters.includes(clean)) {
+      state.waiters.push(clean);
+      saveData();
+      io.emit('state', state);
+    }
+  });
+
+  socket.on('deleteWaiter', (name) => {
+    state.waiters = state.waiters.filter(w => w !== name);
+    // Limpiar de mesas
+    Object.values(state.tables).forEach(t => {
+      if (t.waiter === name) t.waiter = '';
+    });
+    saveData();
+    io.emit('state', state);
+  });
+
   socket.on('updateTable', (data) => {
     const { tableId, items, notes, status } = data;
     if (!state.tables[tableId]) return;
@@ -159,6 +180,7 @@ io.on('connection', (socket) => {
       table.total = calculateTotal(items);
     }
     if (notes !== undefined) table.notes = notes;
+    if (data.waiter !== undefined) table.waiter = data.waiter || '';
     if (status !== undefined) table.status = status;
     if (table.status === 'ocupada' && !table.openedAt) {
       table.openedAt = new Date().toISOString();
@@ -180,6 +202,7 @@ io.on('connection', (socket) => {
     table.status = 'libre';
     table.items = [];
     table.notes = "";
+    table.waiter = "";
     table.total = 0;
     table.openedAt = null;
     saveData();

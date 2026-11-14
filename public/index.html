@@ -25,10 +25,15 @@
     <main id="main">
       <!-- Vista Mesas (Mozos) -->
       <section id="view-mesas" class="view active">
+        <div id="waiter-filters" class="waiter-filters"></div>
         <div class="tables-grid" id="tables-grid"></div>
         <div id="table-detail" class="hidden">
           <button class="back-btn" id="back-to-tables">← Volver a mesas</button>
           <h2>Mesa <span id="detail-table-num"></span></h2>
+          <div class="waiter-section">
+            <label>Asignar mozo:</label>
+            <div id="waiter-buttons" class="waiter-buttons"></div>
+          </div>
           <div id="current-order"></div>
           <div class="add-item-section">
             <h3>Agregar producto</h3>
@@ -79,6 +84,14 @@
             <button class="btn" id="tables-plus">+</button>
           </div>
           <button class="btn primary" id="apply-tables">Aplicar</button>
+        </div>
+        <div class="config-item">
+          <label>Nombres de mozos:</label>
+          <div class="add-menu-form">
+            <input type="text" id="new-waiter-name" placeholder="Nombre (ej: Santiago)">
+            <button class="btn primary" id="add-waiter">Agregar</button>
+          </div>
+          <div id="waiters-list"></div>
         </div>
         <div class="info-box">
           <p><strong>Cómo usar:</strong></p>
