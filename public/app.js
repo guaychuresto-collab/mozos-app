@@ -107,45 +107,87 @@ function renderFilters() {
   });
 }
 
+function isMobile() {
+  return window.innerWidth <= 768;
+}
+
 function showTables() {
   tablesGrid.classList.remove('hidden');
   tableDetail.classList.add('hidden');
   tablesGrid.innerHTML = '';
-  tablesGrid.classList.add('salon-layout');
   renderFilters();
 
-  const tables = Object.values(state.tables);
-  tables.forEach(table => {
-    if (currentFilter !== 'todos' && table.waiter !== currentFilter) return;
+  const searchInput = document.getElementById('search-table');
+  const query = (searchInput?.value || '').toLowerCase().trim();
 
-    const pos = TABLE_POSITIONS[table.id] || {left: 50, top: 50};
-    const card = document.createElement('div');
-    let statusClass = 'libre';
-    if (table.items && table.items.length > 0) {
-      statusClass = 'con-pedido';
-    } else if (table.status === 'ocupada') {
-      statusClass = 'ocupada';
-    }
-    card.className = `table-card ${statusClass}`;
-    card.style.left = pos.left + '%';
-    card.style.top = pos.top + '%';
+  const tables = Object.values(state.tables)
+    .filter(t => !query || String(t.id).includes(query))
+    .filter(t => currentFilter === 'todos' || t.waiter === currentFilter)
+    .sort((a, b) => a.id - b.id);
 
-    const color = getWaiterColor(table.waiter);
-    if (color) {
-      card.style.background = color;
-      card.style.borderColor = color;
-      card.style.color = '#fff';
-    }
+  if (isMobile()) {
+    // Vista lista para celular
+    tablesGrid.classList.remove('salon-layout');
+    tablesGrid.classList.add('list-layout');
+    tables.forEach(table => {
+      const card = document.createElement('div');
+      card.className = 'table-list-item';
+      const color = getWaiterColor(table.waiter);
+      card.innerHTML = `
+        <div class="list-number" style="color:${color || '#1b5e20'}">${table.id}</div>
+        <div class="list-info">
+          <div class="list-waiter">${table.waiter || 'Sin asignar'}</div>
+          <div class="list-status">${table.items?.length ? 'Con pedido' : (table.status === 'ocupada' ? 'Ocupada' : 'Libre')}</div>
+        </div>
+        ${table.total > 0 ? `<div class="list-total">$${Math.round(table.total/1000)}k</div>` : ''}
+      `;
+      if (color) card.style.borderLeft = `5px solid ${color}`;
+      card.addEventListener('click', () => openTable(table.id));
+      tablesGrid.appendChild(card);
+    });
+  } else {
+    // Vista mapa para computadora (mismo orden, más ancho)
+    tablesGrid.classList.remove('list-layout');
+    tablesGrid.classList.add('salon-layout');
+    tables.forEach(table => {
+      const pos = TABLE_POSITIONS[table.id] || {left: 50, top: 50};
+      const card = document.createElement('div');
+      let statusClass = 'libre';
+      if (table.items && table.items.length > 0) statusClass = 'con-pedido';
+      else if (table.status === 'ocupada') statusClass = 'ocupada';
+      card.className = `table-card ${statusClass}`;
+      card.style.left = pos.left + '%';
+      card.style.top = pos.top + '%';
 
-    card.innerHTML = `
-      <div class="table-number">${table.id}</div>
-      ${table.waiter ? `<div class="table-waiter">${table.waiter.split(' ')[0]}</div>` : ''}
-      ${table.total > 0 ? `<div class="table-total">$${Math.round(table.total/1000)}k</div>` : ''}
-    `;
-    card.addEventListener('click', () => openTable(table.id));
-    tablesGrid.appendChild(card);
-  });
+      const color = getWaiterColor(table.waiter);
+      if (color) {
+        card.style.background = color;
+        card.style.borderColor = color;
+        card.style.color = '#fff';
+      }
+
+      card.innerHTML = `
+        <div class="table-number">${table.id}</div>
+        ${table.waiter ? `<div class="table-waiter">${table.waiter.split(' ')[0]}</div>` : ''}
+        ${table.total > 0 ? `<div class="table-total">$${Math.round(table.total/1000)}k</div>` : ''}
+      `;
+      card.addEventListener('click', () => openTable(table.id));
+      tablesGrid.appendChild(card);
+    });
+  }
 }
+
+// Buscador de mesa
+document.getElementById('search-table')?.addEventListener('input', () => {
+  showTables();
+});
+
+// Redibujar al cambiar tamaño de ventana
+window.addEventListener('resize', () => {
+  if (document.getElementById('view-mesas')?.classList.contains('active')) {
+    showTables();
+  }
+});
 
 function openTable(id) {
   currentTableId = id;
